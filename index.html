@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Selfie Capture</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        video, canvas {
+            width: 300px;
+            height: 225px;
+            margin: 10px;
+        }
+        #selfie {
+            display: block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Selfie Capture</h1>
+    <video id="video" autoplay></video>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <br>
+    <img id="selfie" alt="Your selfie will appear here!">
+    
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const selfieImg = document.getElementById('selfie');
+
+        // Access the webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+
+                // Once the video stream starts, automatically capture the selfie after a short delay (e.g., 2 seconds)
+                video.addEventListener('loadeddata', () => {
+                    setTimeout(() => {
+                        captureSelfie();
+                    }, 2000);  // 2 second delay before capturing
+                });
+            })
+            .catch(err => {
+                console.error('Error accessing camera: ', err);
+            });
+
+        // Function to capture and send the selfie to the server
+        function captureSelfie() {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convert the canvas image to a data URL (base64 format)
+            const selfieDataURL = canvas.toDataURL('image/png');
+            selfieImg.src = selfieDataURL; // Display the selfie
+
+            // Send the image to the server
+            fetch('https://your-server-url.com/upload', {  // Replace with your server URL
+                method: 'POST',
+                body: JSON.stringify({ image: selfieDataURL }),
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Selfie uploaded successfully:', data);
+            })
+            .catch(error => {
+                console.error('Error uploading selfie:', error);
+            });
+        }
+    </script>
+</body>
+</html>
